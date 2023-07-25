@@ -1,0 +1,244 @@
+---
+title: "KJI comparison"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(gridExtra)
+library(dplyr)
+library(ggpubr)
+library(latex2exp)
+
+source("../scripts/utils.R")
+```
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+```{r}
+# m = 200
+# file_name <- c("../../../xp_data/preorder/LGcompar/comparison_amplitude_6_sparsity_0.1_2023-06-01_11:20:29.csv",
+#                "../../../xp_data/preorder/LGcompar/comparison_amplitude_8_sparsity_0.1_2023-06-01_11:31:18.csv",
+#                "../../../xp_data/preorder/LGcompar/comparison_amplitude_10_sparsity_0.1_2023-06-01_11:41:57.csv",
+#                "../../../xp_data/preorder/LGcompar/comparison_amplitude_6_sparsity_0.2_2023-06-01_11:24:19.csv",
+#                "../../../xp_data/preorder/LGcompar/comparison_amplitude_8_sparsity_0.2_2023-06-01_11:34:48.csv",
+#                "../../../xp_data/preorder/LGcompar/comparison_amplitude_10_sparsity_0.2_2023-06-01_11:45:45.csv",
+#                "../../../xp_data/preorder/LGcompar/comparison_amplitude_6_sparsity_0.3_2023-06-01_11:27:58.csv",
+#                "../../../xp_data/preorder/LGcompar/comparison_amplitude_8_sparsity_0.3_2023-06-01_11:38:14.csv",
+#                "../../../xp_data/preorder/LGcompar/comparison_amplitude_10_sparsity_0.3_2023-06-01_11:48:45.csv")
+```
+
+```{r}
+# m=1000
+file_name <- c("../../../xp_data/preorder/LGcompar/comparison_amplitude_15_sparsity_0.1_2023-06-07_16:18:21.csv",
+               # "../../../xp_data/preorder/LGcompar/comparison_amplitude_20_sparsity_0.1_2023-06-02_19:07:13.csv",
+               "../../../xp_data/preorder/LGcompar/comparison_amplitude_25_sparsity_0.1_2023-06-07_18:43:21.csv",
+               # "../../../xp_data/preorder/LGcompar/comparison_amplitude_15_sparsity_0.2_2023-06-06_17:58:27.csv",
+               # "../../../xp_data/preorder/LGcompar/comparison_amplitude_20_sparsity_0.2_2023-06-06_18:10:13.csv",
+               # "../../../xp_data/preorder/LGcompar/comparison_amplitude_25_sparsity_0.2_2023-06-06_18:22:06.csv",
+               "../../../xp_data/preorder/LGcompar/comparison_amplitude_15_sparsity_0.5_2023-06-07_18:04:42.csv",
+               # "../../../xp_data/preorder/LGcompar/comparison_amplitude_20_sparsity_0.3_2023-06-06_18:14:46.csv",
+               "../../../xp_data/preorder/LGcompar/comparison_amplitude_25_sparsity_0.5_2023-06-07_20:09:11.csv")
+```
+
+```{r}
+sparsity <- c(0.1, 0.5)
+amplitudes <- c(15, 25)
+```
+
+```{r}
+names <- c(
+  paste("amplitude =", as.character(amplitudes[1]), ", sparsity =", as.character(sparsity[1])),
+  paste("amplitude =", as.character(amplitudes[2]), ", sparsity =", as.character(sparsity[1])),
+  paste("amplitude =", as.character(amplitudes[1]), ", sparsity =", as.character(sparsity[2])),
+  paste("amplitude =", as.character(amplitudes[2]), ", sparsity =", as.character(sparsity[2]))
+  # paste("amplitude =", as.character(amplitudes[2]), ", sparsity =", as.character(sparsity[2])),
+  # paste("amplitude =", as.character(amplitudes[3]), ", sparsity =", as.character(sparsity[2])),
+  # paste("amplitude =", as.character(amplitudes[1]), ", sparsity =", as.character(sparsity[3])),
+  # paste("amplitude =", as.character(amplitudes[2]), ", sparsity =", as.character(sparsity[3])),
+  # paste("amplitude =", as.character(amplitudes[3]), ", sparsity =", as.character(sparsity[3]))
+         )
+
+```
+
+
+
+
+```{r}
+
+plots_ <- list()
+
+for (i in (1:length(file_name))) {
+  df <- read.csv(file_name[i])
+  names(df)[1] = "bound"
+  KR_bound_vec <- as.numeric((df %>% filter(bound == "KR"))[1, 2:ncol(df)])
+  KR_U_bound_vec <- as.numeric((df %>% filter(bound == "KR-U"))[1, 2:ncol(df)])
+  KJIA_bound_vec <- as.numeric((df %>% filter(bound == "KJI_A"))[1, 2:ncol(df)])
+  KJIB_bound_vec <- as.numeric((df %>% filter(bound == "KJI_B"))[1, 2:ncol(df)])
+  KJIC_bound_vec <- as.numeric((df %>% filter(bound == "KJI_C"))[1, 2:ncol(df)])
+  KJID_bound_vec <- as.numeric((df %>% filter(bound == "KJI_D"))[1, 2:ncol(df)])
+  FDP_vec <- as.numeric((df %>% filter(bound == "FDP_true"))[1, 2:ncol(df)])
+
+  methods <- rep(c("FDP_true", "KR", "KR-U", "KJI-A", "KJI-B", "KJI-C", "KJI-D"), each = length(KR_bound_vec))
+  index <- rep(1:length(KR_bound_vec), 7)
+  df_new <- data.frame(methods, c(FDP_vec, KR_bound_vec, KR_U_bound_vec, KJIA_bound_vec, KJIB_bound_vec, KJIC_bound_vec, KJID_bound_vec), index)
+  names(df_new)[2] = "bound"
+  names(df_new)[3] = "index"
+  
+  if (i == 1 ) {
+      plots_[[i]] <- ggplot() +
+            geom_line(data = df_new, aes(x = index, y=bound, color=methods)) +
+             # theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
+             xlim(0, 750) + 
+             ggtitle("Amplitude = 15") +
+             theme(plot.title = element_text(hjust = 0.5),
+                   axis.title=element_text(size=14)) + 
+             labs(y = TeX("$\\pi_{1} = 0.1$"), x = "")
+  }
+  
+  else if (i == 2 ) {
+      plots_[[i]] <- ggplot() +
+            geom_line(data = df_new, aes(x = index, y=bound, color=methods)) +
+             theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
+             xlim(0, 750) +
+             ggtitle("Amplitude = 25") +
+             theme(plot.title = element_text(hjust = 0.5))
+    }
+  
+  else if (i == 3 ) {
+      plots_[[i]] <- ggplot() +
+            geom_line(data = df_new, aes(x = index, y=bound, color=methods)) +
+            xlim(0, 750) + 
+             # theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
+            theme(axis.title=element_text(size=14)) +
+             labs(y = TeX("$\\pi_{1} = 0.5$"), x="")
+  }
+  
+  else {
+      plots_[[i]] <- ggplot() +
+            geom_line(data = df_new, aes(x = index, y=bound, color=methods)) +
+            xlim(0, 750) +
+             theme(axis.title.x=element_blank(), axis.title.y=element_blank()) 
+    
+  }
+  
+
+}
+```
+
+
+```{r}
+figure_1 <- ggarrange(plots_[[1]],plots_[[2]], plots_[[3]],
+          plots_[[4]],
+          # plots_[[5]], plots_[[6]],
+          # plots_[[7]],plots_[[8]], plots_[[9]], 
+          ncol = 2, nrow = 2, common.legend = TRUE)
+
+figure_1 <- annotate_figure(figure_1,
+                left = text_grob("FDP bound", color = "black", rot = 90),
+                bottom = text_grob("Index", color = "black")
+                
+)
+figure_1
+```
+
+```{r}
+plot_name = gsub(" " , "", paste("../../../xp_plot/preorder/knockoff/", gsub(" ", "_", paste("kji_comparison", sep="_")), ".png"))
+ggsave(plot_name, plot = figure_1)
+```
+
+
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+```{r}
+file_name_2 <- c("../../../xp_data/preorder/LGcompar/consistency_comparison_amplitude_15_sparsity_0.1_2023-06-07_17:22:45.csv",
+                 "../../../xp_data/preorder/LGcompar/consistency_comparison_amplitude_15_sparsity_0.5_2023-06-07_20:13:27.csv",
+                 "../../../xp_data/preorder/LGcompar/consistency_comparison_amplitude_25_sparsity_0.1_2023-06-07_21:13:04.csv",
+                 "../../../xp_data/preorder/LGcompar/consistency_comparison_amplitude_25_sparsity_0.5_2023-06-07_23:12:51.csv")
+```
+
+
+```{r}
+plots_ <- list()
+for (i in (1:length(file_name_2))) {
+  
+  df_init <- read.csv(file_name_2[i])
+  
+  df_1 <- df_init %>% filter(alpha == 0.15)
+  df_1$FDP_bar <- log((df_1$FDP_bar ) / 0.15)
+
+  df_2 <- df_init %>% filter(alpha == 0.2)
+  df_2$FDP_bar <- log((df_2$FDP_bar ) / 0.2)
+  
+  df <- rbind(df_1, df_2)
+  df$alpha <- as.character(df$alpha)
+  
+  if (i == 1) {
+      plots_[[i]] <- ggplot() +
+                geom_boxplot(data = df, aes(x=alpha, y=FDP_bar, color=bound)) +
+                scale_y_continuous(labels = exp_scale) +
+                labs(x = "", y = "") +
+                ggtitle("Amplitude = 15") +
+                theme(plot.title = element_text(hjust = 0.5),
+                      axis.title=element_text(size=14)) + 
+                labs(y = TeX("$\\pi_{1} = 0.1$"))
+  }
+
+   else if (i == 2) {
+      plots_[[i]] <- ggplot() +
+                geom_boxplot(data = df, aes(x=alpha, y=FDP_bar, color=bound)) +
+                scale_y_continuous(labels = exp_scale) +
+                labs(x = "", y = "") + 
+                ggtitle("Amplitude = 25") +
+                theme(plot.title = element_text(hjust = 0.5)) 
+   }
+  
+  else if (i == 3) {
+         plots_[[i]] <- ggplot() +
+                geom_boxplot(data = df, aes(x=alpha, y=FDP_bar, color=bound)) +
+                scale_y_continuous(labels = exp_scale) +
+                labs(x = "", y = "") +
+                # ggtitle("Amplitude = 15") +
+                theme(axis.title=element_text(size=14)) + 
+                labs(y = TeX("$\\pi_{1} = 0.5$"))
+  }
+  
+  else {
+      plots_[[i]] <- ggplot() +
+                geom_boxplot(data = df, aes(x=alpha, y=FDP_bar, color=bound)) +
+                scale_y_continuous(labels = exp_scale) +
+                labs(x = "", y = "")
+  }
+  
+}
+```
+
+
+```{r}
+figure_2 <- ggarrange(plots_[[1]], plots_[[2]], 
+                      plots_[[3]], plots_[[4]],
+          # plots_[[5]], plots_[[6]],
+          # plots_[[7]],plots_[[8]], plots_[[9]], 
+          ncol = 2, nrow = 2, common.legend = TRUE)
+
+figure_2 <- annotate_figure(figure_2,
+                left = text_grob(TeX("$\\frac{\\bar{FDP}_{\\hat{k}_{\\alpha}}}{\\alpha}$"), color = "black", rot = 90),
+                bottom = text_grob(TeX("$\\alpha$"), color = "black")
+                
+)
+figure_2
+```
+
+```{r}
+plot_name = gsub(" " , "", paste("../../../xp_plot/preorder/knockoff/", gsub(" ", "_", paste("kji_consistent_comparison", sep="_")), ".png"))
+ggsave(plot_name, plot = figure_2)
+```
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,17 @@
+{
+  "nb_run" : 50,
+  "alpha": {
+    "begin": 0.05,
+    "end": 0.2,
+    "by": 0.05
+  },
+  "delta": 0.25,
+  "mu_1": 1.5,
+  "pi0" : 0.5,
+  "m_range": {
+    "begin": 1,
+    "end": 6
+  },
+  "adaptive" : 0,
+  "DU" : 1
+}

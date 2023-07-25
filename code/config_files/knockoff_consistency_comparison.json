@@ -1,0 +1,14 @@
+{
+  "nb_run" : 10,
+  "delta": 0.05,
+  "lambda": 0.5,
+  "proc_s" : 0.5,
+  "p": 1000,
+  "n": 1500,
+  "alpha_grid": [0.15, 0.2],
+  "amplitude_grid": [15, 25],
+  "sparsity_grid": [0.1, 0.5],
+  "rho": 0.6,
+  "tuning_param_path": "rmd/CriticalValuesVmax65.RData"
+  
+}

@@ -1,0 +1,439 @@
+---
+title: "Top_xp_plots"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(RColorBrewer)
+library(latex2exp)
+
+source("../../scripts/utils.R")
+```
+
+```{r}
+alpha_seq <-c(0.05, 0.1, 0.15, 0.2)
+pi0 = 0.5
+m_range <- c(10^(1:4))
+```
+
+
+#------------------------------------------------------------------------------------------------------------
+pi0_hat
+
+```{r}
+# pi0hats 
+# in fact does not depend on alpha 
+
+file_names_1 <- c(
+"../../../xp_data/topk/pi0hat/data_pi0hat_vary_m_and_alpha_0.05_2023-03-27_14:53:47.csv",
+"../../../xp_data/topk/pi0hat/data_pi0hat_vary_m_and_alpha_0.1_2023-03-27_17:48:11.csv",
+"../../../xp_data/topk/pi0hat/data_pi0hat_vary_m_and_alpha_0.15_2023-03-27_20:39:35.csv",
+"../../../xp_data/topk/pi0hat/data_pi0hat_vary_m_and_alpha_0.2_2023-03-27_23:30:18.csv"
+)
+```
+
+
+```{r}
+read.csv(file_names_1[1])
+```
+
+
+```{r}
+for (i in 1:length(file_names_1)) {
+
+  df <- read.csv(file_names_1[i])
+  alpha_ <- alpha_seq[i]
+  
+  df$pi_hat <- log((df$pi_hat) / pi0)
+  df$m <- as.character(df$m)
+
+  df <- df %>% filter(m != 10)
+
+
+  plot_ <- ggplot(df, aes(x=m, y=pi_hat, color=bound)) +
+           scale_colour_discrete(limits = c("SIMES", "DKW", "KR", "WELLNER")) +
+           geom_boxplot() +
+           scale_y_continuous(labels = exp_scale) +
+           labs(x = "m", y = TeX("$\\frac{\\hat{\\pi}_{0}}{\\pi_{0}}$"))
+
+  # plot_ <- ggplot(df, aes(x=m, y=pi_hat, color=bound)) +
+  #         geom_boxplot() +
+  #         facet_wrap(~m, scale="free") +
+  #         geom_hline(yintercept = 0.5) +
+  #         theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
+  #         labs(x = "m", y = TeX("$\\hat{\\pi}_{0}$"))
+
+  plot_name = gsub(" " , "", paste("../../../xp_plot/topk/pi0hat/", gsub(" ", "_", paste("pi0hat_alpha", as.character(alpha_), sep="_")), ".png"))
+  ggsave(filename = plot_name, plot = plot_, width = 16, height = 10, units = "cm")
+
+}
+```
+
+#------------------------------------------------------------------------------------------------------------
+Dense non adaptive setting 
+```{r}
+# vary m and alpha dense non adapt
+file_names_2 <- c(
+"../../../xp_data/topk/vary_m_alpha/non_adapt/data_bound_vary_m_and_alpha_0.05_2023-03-23_11:03:28.csv",
+"../../../xp_data/topk/vary_m_alpha/non_adapt/data_bound_vary_m_and_alpha_0.1_2023-03-23_11:07:43.csv",
+"../../../xp_data/topk/vary_m_alpha/non_adapt/data_bound_vary_m_and_alpha_0.15_2023-03-23_11:12:03.csv",
+"../../../xp_data/topk/vary_m_alpha/non_adapt/data_bound_vary_m_and_alpha_0.2_2023-03-23_11:16:31.csv"
+)
+```
+
+```{r}
+file_names_interp_2 <- c("../../../xp_data/topk/vary_m_alpha/interp/data_interp_bound_vary_m_and_alpha_0.05_2023-05-24_09:15:17.csv",
+                         "../../../xp_data/topk/vary_m_alpha/interp/data_interp_bound_vary_m_and_alpha_0.1_2023-05-24_09:27:36.csv",
+                         "../../../xp_data/topk/vary_m_alpha/interp/data_interp_bound_vary_m_and_alpha_0.15_2023-05-24_09:46:35.csv",
+                         "../../../xp_data/topk/vary_m_alpha/interp/data_interp_bound_vary_m_and_alpha_0.2_2023-05-24_10:10:38.csv")
+```
+
+
+```{r}
+rej_files_names <- c(
+  # "../../../xp_data/topk/vary_m_alpha/non_adapt/data_nb_rej_vary_m_and_alpha_0.05_2023-03-23_11:03:28.csv",
+  # "../../../xp_data/topk/vary_m_alpha/non_adapt/data_nb_rej_vary_m_and_alpha_0.1_2023-03-23_11:07:43.csv",
+  # "../../../xp_data/topk/vary_m_alpha/non_adapt/data_nb_rej_vary_m_and_alpha_0.15_2023-03-23_11:12:03.csv",
+  "../../../xp_data/topk/vary_m_alpha/non_adapt/data_nb_rej_vary_m_and_alpha_0.2_2023-03-23_11:16:31.csv"
+)
+```
+
+```{r}
+nb_rej_df <- read.csv(rej_files_names[1])
+
+# nb_rej_df
+nb_rej_med_df <- aggregate(.~m, data=nb_rej_df, median)
+nb_rej_med_df
+```
+
+```{r}
+for (i in 1:length(file_names_2)) {
+  
+  # get median for interpolated bounds 
+  interp_df <- c()
+  datalist <- list()
+  for (j in 1:length(m_range)) {
+    df_interp_bound <- read.csv(file_names_interp_2[i])
+    df_interp_bound <- df_interp_bound %>% filter(m == m_range[j])
+  
+    datalist[[j]] <- aggregate(.~bound, data=df_interp_bound, median)
+  }
+  interp_df = do.call(rbind, datalist)
+
+  #------------------------------------------------------------------------------
+  df_bound <- read.csv(file_names_2[i])
+  alpha_ <- alpha_seq[i]
+  
+  df_bound <- df_bound %>% filter(m != 10)
+  
+  # y_axis_lim <- round((c(min(df_bound$FDP_bar), max(df_bound$FDP_bar)) - alpha_) / alpha_)
+  
+  # df_bound$FDP_bar <- log((df_bound$FDP_bar - alpha_) / alpha_)
+  df_bound$FDP_bar <- log((df_bound$FDP_bar ) / alpha_)
+  df_bound$m <- as.character(df_bound$m)
+  
+  # interp_df$FDP_bar <- log((interp_df$FDP_bar - alpha_) / alpha_)
+  interp_df$FDP_bar <- log((interp_df$FDP_bar ) / alpha_)
+  interp_df$m <- as.character(interp_df$m)
+  
+  plot_ <- ggplot() +
+           geom_boxplot(data = df_bound, aes(x=m, y=FDP_bar, color=bound)) +
+           # geom_point(data = interp_df, aes(x=m, y=FDP_bar, color=bound), shape=11, size=3, position = position_dodge(width = .75)) +
+           scale_colour_discrete(limits = c("SIMES", "DKW", "KR", "WELLNER", "HYBRID")) +
+           scale_y_continuous(labels = exp_scale) +
+           labs(x = "m", y = TeX("$\\frac{\\bar{FDP}_{\\hat{k}_{\\alpha}}}{\\alpha}$"))
+            
+    
+    
+    
+          # ggplot() + 
+          #  geom_boxplot(data = df_bound, aes(x=m, y=FDP_bar, color=bound)) +
+          #  
+          #  # geom_point(interp_df, aes(x=m, y=FDP_bar, color=bound)) +
+          #  geom_dotplot(data = interp_df, aes(x=m, y=FDP_bar, color=bound), binaxis='y', stackdir='center') +
+          #  # theme(legend.position = "none") +
+          #  scale_colour_discrete(limits = c("SIMES", "DKW", "KR", "WELLNER", "HYBRID")) +
+          #  scale_y_continuous(labels = exp_scale) +
+          #  labs(x = "m", y = TeX("$\\bar{FDP}_{\\hat{k}_{\\alpha}}$"))
+
+  # plot_ <- ggplot(df_bound, aes(x=m, y=FDP_bar, color=bound)) +
+  #         geom_boxplot() +
+  #         facet_wrap(~m, scale="free") +
+  #         geom_hline(yintercept = alpha_) +
+  #         theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
+  #         labs(x = "m", y = TeX("$\\bar{FDP}_{\\hat{k}_{\\alpha}}$"))
+  print(alpha_)
+  plot_name = gsub(" " , "", paste("../../../xp_plot/topk/vary_m_alpha/non_adapt/", gsub(" ", "_", paste("dense_alpha", as.character(alpha_), sep="_")), ".png"))
+  ggsave(filename = plot_name, plot = plot_, width = 16, height = 10, units = "cm")
+ 
+}
+```
+
+
+
+
+
+#------------------------------------------------------------------------------------------------------------
+Adaptive dense setting
+```{r}
+# vary m and alpha adaptive 
+file_names_3 <- c(
+# "../../../xp_data/topk/vary_m_alpha/adapt/data_bound_vary_m_and_alpha_0.05_2023-03-23_14:46:42.csv",
+# "../../../xp_data/topk/vary_m_alpha/adapt/data_bound_vary_m_and_alpha_0.1_2023-03-23_17:55:33.csv",
+# "../../../xp_data/topk/vary_m_alpha/adapt/data_bound_vary_m_and_alpha_0.15_2023-03-23_21:11:57.csv",
+"../../../xp_data/topk/vary_m_alpha/adapt/data_bound_vary_m_and_alpha_0.2_2023-03-24_00:29:51.csv"
+)
+```
+
+
+```{r}
+file_names_interp_3 <- c("../../../xp_data/topk/vary_m_alpha/interp/adapt/data_interp_bound_vary_m_and_alpha_0.2_2023-05-28_15:40:05.csv")
+```
+
+
+```{r}
+rej_files_names <- c(
+  # "../../../xp_data/topk/vary_m_alpha/adapt/data_nb_rej_vary_m_and_alpha_0.05_2023-03-23_14:46:42.csv",
+  # "../../../xp_data/topk/vary_m_alpha/adapt/data_nb_rej_vary_m_and_alpha_0.1_2023-03-23_17:55:33.csv",
+  # "../../../xp_data/topk/vary_m_alpha/adapt/data_nb_rej_vary_m_and_alpha_0.15_2023-03-23_21:11:57.csv",
+  "../../../xp_data/topk/vary_m_alpha/adapt/data_nb_rej_vary_m_and_alpha_0.2_2023-03-24_00:29:51.csv"
+)
+```
+
+```{r}
+nb_rej_df <- read.csv(rej_files_names[1])
+
+# nb_rej_df
+nb_rej_med_df <- aggregate(.~m, data=nb_rej_df, median)
+nb_rej_med_df
+```
+
+```{r}
+for (i in 1:length(file_names_3)) {
+  
+  # get median for interpolated bounds 
+  interp_df <- c()
+  datalist <- list()
+  for (j in 1:length(m_range)) {
+    df_interp_bound <- read.csv(file_names_interp_3[i])
+    df_interp_bound <- df_interp_bound %>% filter(m == m_range[j])
+  
+    datalist[[j]] <- aggregate(.~bound, data=df_interp_bound, median)
+  }
+  interp_df = do.call(rbind, datalist)
+  #------------------------------------------------------------------------------
+  df_bound <- read.csv(file_names_3[i])
+  alpha_ <- alpha_seq[4]
+  
+  df_bound <- df_bound %>% filter(m != 10)
+
+  # df_bound$FDP_bar <- log((df_bound$FDP_bar - alpha_) / alpha_)
+  df_bound$FDP_bar <- log((df_bound$FDP_bar) / alpha_)
+  df_bound$m <- as.character(df_bound$m)
+
+  # interp_df$FDP_bar <- log((interp_df$FDP_bar - alpha_) / alpha_)
+  interp_df$FDP_bar <- log((interp_df$FDP_bar ) / alpha_)
+  interp_df$m <- as.character(interp_df$m)
+  
+  plot_ <- ggplot() +
+           geom_boxplot(data = df_bound, aes(x=m, y=FDP_bar, color=bound)) +
+           # geom_point(data = interp_df, aes(x=m, y=FDP_bar, color=bound), shape=11, size=3, position = position_dodge(width = .75)) +
+           scale_colour_discrete(limits = c("SIMES", "DKW", "KR", "WELLNER", "HYBRID")) +
+           scale_y_continuous(labels = exp_scale) +
+           labs(x = "m", y = TeX("$\\frac{\\bar{FDP}_{\\hat{k}_{\\alpha}}}{\\alpha}$"))
+
+  # plot_ <- ggplot(df_bound, aes(x=m, y=FDP_bar, color=bound)) +
+  #          scale_colour_discrete(limits = c("SIMES", "DKW", "KR", "WELLNER", "HYBRID")) +
+  #          geom_boxplot() +
+  #          scale_y_continuous(labels = exp_scale) +
+  #          labs(x = "m", y = TeX("$\\bar{FDP}_{\\hat{k}_{\\alpha}}$"))
+
+  # plot_ <- ggplot(df_bound, aes(x=m, y=FDP_bar, color=bound)) +
+  #         geom_boxplot() +
+  #         facet_wrap(~m, scale="free") +
+  #         geom_hline(yintercept = pi0 * alpha_) +
+  #         theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
+  #         labs(x = "m", y = TeX("$\\bar{FDP}_{\\hat{k}_{\\alpha}}$"))
+  
+  plot_name = gsub(" " , "", paste("../../../xp_plot/topk/vary_m_alpha/adapt/", gsub(" ", "_", paste("dense_adapt_alpha", as.character(alpha_), sep="_")), ".png"))
+  ggsave(filename = plot_name, plot = plot_, width = 16, height = 10, units = "cm")
+ 
+}
+```
+
+
+
+#---------------------------------------------------------------------------------------------------------
+Sparse setting with beta = 0.25
+
+```{r}
+# vary m and alpha sparse beta = 0.25 
+file_names_4 <- c(
+"../../../xp_data/topk/vary_m_alpha/non_adapt/sparse/0_25/data_bound_sparse_vary_m_and_alpha_0.2_2023-04-05_11:33:59.csv"
+)
+```
+
+```{r}
+file_names_interp_4 <- c("../../../xp_data/topk/vary_m_alpha/interp/sparse/0.25/data_interp_bound_sparse_vary_m_and_alpha_0.2_2023-05-04_10:22:32.csv")
+```
+
+
+```{r}
+rej_files_names <- c(
+  "../../../xp_data/topk/vary_m_alpha/non_adapt/sparse/0_25/data_nb_rej_sparse_vary_m_and_alpha_0.2_2023-04-05_11:33:59.csv"
+)
+```
+
+```{r}
+nb_rej_df <- read.csv(rej_files_names[1])
+
+nb_rej_df
+nb_rej_med_df <- aggregate(.~m, data=nb_rej_df, median)
+nb_rej_med_df
+```
+
+```{r}
+for (i in 1:length(file_names_4)) {
+  
+  
+  # get median for interpolated bounds 
+  interp_df <- c()
+  datalist <- list()
+  for (j in 1:length(m_range)) {
+    df_interp_bound <- read.csv(file_names_interp_4[i])
+    df_interp_bound <- df_interp_bound %>% filter(m == m_range[j])
+  
+    datalist[[j]] <- aggregate(.~bound, data=df_interp_bound, median)
+  }
+  interp_df = do.call(rbind, datalist)
+  #------------------------------------------------------------------------------
+
+  df_bound <- read.csv(file_names_4[i])
+  alpha_ <- alpha_seq[4]
+
+  df_bound <- df_bound %>% filter(m != 10)
+  
+  # df_bound$FDP_bar <- log((df_bound$FDP_bar - alpha_) / alpha_)
+  df_bound$FDP_bar <- log((df_bound$FDP_bar) / alpha_)
+  df_bound$m <- as.character(df_bound$m)
+  
+  # interp_df$FDP_bar <- log((interp_df$FDP_bar - alpha_) / alpha_)
+  interp_df$FDP_bar <- log((interp_df$FDP_bar ) / alpha_)
+  interp_df$m <- as.character(interp_df$m)
+
+  plot_ <- ggplot() +
+           geom_boxplot(data = df_bound, aes(x=m, y=FDP_bar, color=bound)) +
+           # geom_point(data = interp_df, aes(x=m, y=FDP_bar, color=bound), shape=11, size=3, position = position_dodge(width = .75)) +
+           scale_colour_discrete(limits = c("SIMES", "DKW", "KR", "WELLNER", "HYBRID")) +
+           scale_y_continuous(labels = exp_scale) +
+           labs(x = "m", y = TeX("$\\frac{\\bar{FDP}_{\\hat{k}_{\\alpha}}}{\\alpha}$"))
+    
+    
+    # ggplot(df_bound, aes(x=m, y=FDP_bar, color=bound)) +
+    #        scale_colour_discrete(limits = c("SIMES", "DKW", "KR", "WELLNER", "HYBRID")) +
+    #        geom_boxplot() +
+    #        scale_y_continuous(labels = exp_scale) +
+    #        labs(x = "m", y = TeX("$\\bar{FDP}_{\\hat{k}_{\\alpha}}$"))
+  
+  # plot_ <- ggplot(df_bound, aes(x=m, y=FDP_bar, color=bound)) +
+  #         geom_boxplot() +
+  #         facet_wrap(~m, scale="free") +
+  #         geom_hline(yintercept = alpha_) +
+  #         theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
+  #         labs(x = "m", y = TeX("$\\bar{FDP}_{\\hat{k}_{\\alpha}}$"))
+  
+  plot_name = gsub(" " , "", paste("../../../xp_plot/topk/vary_m_alpha/non_adapt/", gsub(" ", "_", paste("sparse_beta_0_25_alpha", as.character(alpha_), sep="_")), ".png"))
+  ggsave(filename = plot_name, plot = plot_, width = 16, height = 10, units = "cm")
+ 
+}
+```
+
+
+
+
+#---------------------------------------------------------------------------------------------------------
+Sparse setting with beta = 0.55
+
+```{r}
+# vary m and alpha sparse beta = 0.55 
+file_names_5 <- c(
+"../../../xp_data/topk/vary_m_alpha/non_adapt/sparse/0_55/data_bound_sparse_vary_m_and_alpha_0.2_2023-04-05_12:34:50.csv"
+)
+```
+
+```{r}
+file_names_interp_5 <- c("../../../xp_data/topk/vary_m_alpha/interp/sparse/0.55/data_interp_bound_sparse_vary_m_and_alpha_0.2_2023-05-04_11:03:08.csv")
+```
+
+
+```{r}
+rej_files_names <- c(
+  "../../../xp_data/topk/vary_m_alpha/non_adapt/sparse/0_55/data_nb_rej_sparse_vary_m_and_alpha_0.2_2023-04-05_12:34:50.csv"
+)
+```
+
+```{r}
+nb_rej_df <- read.csv(rej_files_names[1])
+
+nb_rej_df
+nb_rej_med_df <- aggregate(.~m, data=nb_rej_df, median)
+nb_rej_med_df
+```
+
+```{r}
+for (i in 1:length(file_names_5)) {
+  
+  # get median for interpolated bounds 
+  interp_df <- c()
+  datalist <- list()
+  for (j in 1:length(m_range)) {
+    df_interp_bound <- read.csv(file_names_interp_5[i])
+    df_interp_bound <- df_interp_bound %>% filter(m == m_range[j])
+  
+    datalist[[j]] <- aggregate(.~bound, data=df_interp_bound, median)
+  }
+  interp_df = do.call(rbind, datalist)
+  #------------------------------------------------------------------------------
+  df_bound <- read.csv(file_names_5[i])
+  alpha_ <- alpha_seq[4]
+  
+  df_bound <- df_bound %>% filter(m != 10)
+
+  # df_bound$FDP_bar <- log((df_bound$FDP_bar - alpha_) / alpha_)
+  df_bound$FDP_bar <- log((df_bound$FDP_bar) / alpha_)
+  df_bound$m <- as.character(df_bound$m)
+  
+  # interp_df$FDP_bar <- log((interp_df$FDP_bar - alpha_) / alpha_)
+  interp_df$FDP_bar <- log((interp_df$FDP_bar ) / alpha_)
+  interp_df$m <- as.character(interp_df$m)
+
+  plot_ <- ggplot() +
+           geom_boxplot(data = df_bound, aes(x=m, y=FDP_bar, color=bound)) +
+           # geom_point(data = interp_df, aes(x=m, y=FDP_bar, color=bound), shape=11, size=3, position = position_dodge(width = .75)) +
+           scale_colour_discrete(limits = c("SIMES", "DKW", "KR", "WELLNER", "HYBRID")) +
+           scale_y_continuous(labels = exp_scale) +
+           labs(x = "m", y = TeX("$\\frac{\\bar{FDP}_{\\hat{k}_{\\alpha}}}{\\alpha}$"))
+    
+    
+    
+    # ggplot(df_bound, aes(x=m, y=FDP_bar, color=bound)) +
+    #        scale_colour_discrete(limits = c("SIMES", "DKW", "KR", "WELLNER", "HYBRID")) +
+    #        geom_boxplot() +
+    #        scale_y_continuous(labels = exp_scale) +
+    #        labs(x = "m", y = TeX("$\\bar{FDP}_{\\hat{k}_{\\alpha}}$"))
+  
+  
+  # plot_ <- ggplot(df_bound, aes(x=m, y=FDP_bar, color=bound)) +
+  #         geom_boxplot() +
+  #         facet_wrap(~m, scale="free") +
+  #         geom_hline(yintercept = alpha_) +
+  #         theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
+  #         labs(x = "m", y = TeX("$\\bar{FDP}_{\\hat{k}_{\\alpha}}$"))
+  
+  plot_name = gsub(" " , "", paste("../../../xp_plot/topk/vary_m_alpha/non_adapt/", gsub(" ", "_", paste("sparse_beta_0_55_alpha", as.character(alpha_), sep="_")), ".png"))
+  ggsave(filename = plot_name, plot = plot_, width = 16, height = 10, units = "cm")
+ 
+}
+```

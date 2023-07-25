@@ -1,0 +1,154 @@
+---
+title: "online xp plots"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(ggpubr)
+library(dplyr)
+library(RColorBrewer)
+library(latex2exp)
+```
+
+```{r}
+alphas <- seq(0.05, 0.2, 0.05)
+m =  266952 
+```
+
+
+```{r}
+online_base_paths <- c("../../../xp_data/online/data_bound_impc_alpha_0.05_2023-05-28_15:52:53.csv",
+                         "../../../xp_data/online/data_bound_impc_alpha_0.1_2023-05-28_17:45:20.csv",
+                         "../../../xp_data/online/data_bound_impc_alpha_0.15_2023-05-28_19:34:35.csv",
+                         "../../../xp_data/online/data_bound_impc_alpha_0.2_2023-05-28_21:24:16.csv")
+
+```
+
+
+```{r}
+online_interp_paths <- c("../../../xp_data/online/interp/data_bound_interp_impc_alpha_0.05_2023-05-28_16:02:39.csv",
+                         "../../../xp_data/online/interp/data_bound_interp_impc_alpha_0.1_2023-05-28_17:58:24.csv",
+                         "../../../xp_data/online/interp/data_bound_interp_impc_alpha_0.15_2023-05-28_19:52:57.csv",
+                         "../../../xp_data/online/interp/data_bound_interp_impc_alpha_0.2_2023-05-28_21:48:22.csv")
+```
+
+
+```{r}
+df_1 <- read.csv(online_base_paths[1])
+df_2 <- read.csv(online_interp_paths[1])
+
+df_1$index <- seq(1, m, 1)
+df_2$index <- seq(1, m, 1)
+
+plot_1 <- ggplot() +
+        geom_line(data = df_1[10:m, ], aes(x = index, y = KR, color = "KR"), size = 2) +
+        geom_line(data = df_1[10:m, ],  aes(index, KR_U, color = "KR_U"), size = 2) +
+        geom_line(data = df_1[10:m, ], aes(index, Freedman, color = "Freedman"), size = 2) +
+  
+        geom_line(data = df_2[10:m, ], aes(x = index, y = KR, color = "KR"), size = 0.5, linetype = "dashed", color = "grey") +
+        geom_line(data = df_2[10:m, ],  aes(index, KR_U, color = "KR_U"), size = 0.5, linetype = "dashed", color = "grey") +
+        geom_line(data = df_2[10:m, ], aes(index, Freedman, color = "Freedman"), size = 0.5, linetype = "dashed", color = "grey") +
+        
+        geom_hline(yintercept = alphas[1], size = 0.5) +
+        scale_x_continuous(trans = 'log10') +
+        # ylim(0, 0.3) +
+        labs(x = "k", y = TeX("$\\bar{FDP}_{\\alpha, k}$")) +
+        scale_color_manual(name = "Bounds", values = c("KR" = "green1", "KR_U" = "dodgerblue1", "Freedman" = "brown2"))
+plot_1
+```
+
+```{r}
+m_ = length(df_1$KR)
+sum(df_2$KR < df_1$KR) / m_
+sum(df_2$KR_U < df_1$KR_U) / m_
+sum(df_2$Freedman < df_1$Freedman) / m_
+```
+
+```{r}
+df_1 <- read.csv(online_base_paths[2])
+df_2 <- read.csv(online_interp_paths[2])
+
+df_1$index <- seq(1, m, 1)
+df_2$index <- seq(1, m, 1)
+
+plot_2 <- ggplot() +
+        geom_line(data = df_1[10:m, ], aes(x = index, y = KR, color = "KR"), size = 2) +
+        geom_line(data = df_1[10:m, ],  aes(index, KR_U, color = "KR_U"), size = 2) +
+        geom_line(data = df_1[10:m, ], aes(index, Freedman, color = "Freedman"), size = 2) +
+  
+  
+        geom_line(data = df_2[10:m, ], aes(x = index, y = KR, color = "KR"), size = 0.5, linetype = "dashed", color = "grey") +
+        geom_line(data = df_2[10:m, ],  aes(index, KR_U, color = "KR_U"), size = 0.5, linetype = "dashed", color = "grey") +
+        geom_line(data = df_2[10:m, ], aes(index, Freedman, color = "Freedman"), size = 0.5, linetype = "dashed", color = "grey") +
+  
+        geom_hline(yintercept = alphas[2], size = 0.5) +
+        scale_x_continuous(trans = 'log10') +
+        # ylim(0, 0.3) +
+        labs(x = "k", y = TeX("$\\bar{FDP}_{\\alpha, k}$")) +
+        scale_color_manual(name = "Bounds", values = c("KR" = "green1", "KR_U" = "dodgerblue1", "Freedman" = "brown2")) 
+plot_2
+```
+
+```{r}
+df_1 <- read.csv(online_base_paths[3])
+df_2 <- read.csv(online_interp_paths[3])
+
+df_1$index <- seq(1, m, 1)
+df_2$index <- seq(1, m, 1)
+
+plot_3 <- ggplot() +
+        geom_line(data = df_1[10:m, ], aes(x = index, y = KR, color = "KR"), size = 1) +
+        geom_line(data = df_1[10:m, ],  aes(index, KR_U, color = "KR_U"), size = 1) +
+        geom_line(data = df_1[10:m, ], aes(index, Freedman, color = "Freedman"), size = 1) +
+  
+  
+        geom_line(data = df_2[10:m, ], aes(x = index, y = KR, color = "KR"), size = 0.5, linetype = "dashed", color = "grey") +
+        geom_line(data = df_2[10:m, ],  aes(index, KR_U, color = "KR_U"), size = 0.5, linetype = "dashed", color = "grey") +
+        geom_line(data = df_2[10:m, ], aes(index, Freedman, color = "Freedman"), size = 0.5, linetype = "dashed", color = "grey") +
+  
+        geom_hline(yintercept = alphas[3], size = 0.5) +
+        scale_x_continuous(trans = 'log10') +
+        # ylim(0.1, 0.5) +
+        labs(x = "k", y = TeX("$\\bar{FDP}_{\\alpha, k}$")) +
+        scale_color_manual(name = "Bounds", values = c("KR" = "green1", "KR_U" = "dodgerblue1", "Freedman" = "brown2")) 
+plot_3
+```
+
+
+```{r}
+df_1 <- read.csv(online_base_paths[4])
+df_2 <- read.csv(online_interp_paths[4])
+
+df_1$index <- seq(1, m, 1)
+df_2$index <- seq(1, m, 1)
+
+plot_4 <- ggplot() +
+        geom_line(data = df_1[10:m, ], aes(x = index, y = KR, color = "KR"), size = 1) +
+        geom_line(data = df_1[10:m, ],  aes(index, KR_U, color = "KR_U"), size = 1) +
+        geom_line(data = df_1[10:m, ], aes(index, Freedman, color = "Freedman"), size = 1) +
+  
+  
+        geom_line(data = df_2[10:m, ], aes(x = index, y = KR, color = "KR"), size = 0.5, linetype = "dashed", color = "grey") +
+        geom_line(data = df_2[10:m, ],  aes(index, KR_U, color = "KR_U"), size = 0.5, linetype = "dashed", color = "grey") +
+        geom_line(data = df_2[10:m, ], aes(index, Freedman, color = "Freedman"), size = 0.5, linetype = "dashed", color = "grey") +
+  
+        geom_hline(yintercept = alphas[4], size = 0.5) +
+        scale_x_continuous(trans = 'log10') +
+        # ylim(0.1, 0.5) +
+        labs(x = "k", y = TeX("$\\bar{FDP}_{\\alpha, k}$")) +
+        scale_color_manual(name = "Bounds", values = c("KR" = "green1", "KR_U" = "dodgerblue1", "Freedman" = "brown2")) 
+plot_4
+```
+
+```{r}
+figure <- ggarrange(plot_1, plot_2, plot_3, plot_4,
+                    ncol = 2, nrow = 2, 
+                    common.legend = TRUE)
+figure
+```
+
+```{r}
+plot_name = gsub(" " , "", paste("../../../xp_plot/online/", gsub(" ", "_", paste("online_impc", sep="_")), ".png"))
+ggsave(plot_name, plot = figure)
+```

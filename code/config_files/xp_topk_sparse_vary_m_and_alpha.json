@@ -1,0 +1,11 @@
+{
+  "nb_run" : 1000,
+  "alpha": 0.2,
+  "delta": 0.25,
+  "m_range": {
+    "begin": 1,
+    "end": 6
+  },
+  "beta": 0.55,
+  "adaptive" : 0
+}
