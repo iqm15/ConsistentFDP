@@ -73,9 +73,13 @@ m0_hat_vec_Well <- function(t, pvalues, delta) {
   m = length(pvalues)
   V_t <- m - t
   C_t <- 2*log(pi**2 / (6*delta)) + 4*log(1 + log(1/pvalues[t], base = 2))
-
   
-  return( (( sqrt(C_t * pvalues[t]) / (sqrt(2) * (1 - pvalues[t]))) + sqrt( (C_t / (2*(1 - pvalues[t])**2)) + (V_t / (1 - pvalues[t])) ) )**2 )
+  if (pvalues[t] == 1){
+    return(m)
+  }
+  else {
+    return( (( sqrt(C_t * pvalues[t]) / (sqrt(2) * (1 - pvalues[t]))) + sqrt( (C_t / (2*(1 - pvalues[t])**2)) + (V_t / (1 - pvalues[t])) ) )**2 )
+  }
 }
 
 #---------------------------------------------------------------------------------------------------
